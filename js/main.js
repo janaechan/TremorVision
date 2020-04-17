@@ -8,7 +8,7 @@
   ========================================================*/
   $('#preloader').fadeOut();
 
-  /* Testimonials Carousel 
+  /* Testimonials Carousel
   ========================================================*/
   var owl = $("#client-testimonial");
   owl.owlCarousel({
@@ -59,11 +59,19 @@
         getAPIFile(reader.readAsDataURL(this.files[0]));
       }
     });
+
+    if (window.DeviceMotionEvent == undefined) {
+      //No accelerometer is present. Use buttons. 
+      alert("no accelerometer");
+    } else {
+      alert("accelerometer found");
+      window.addEventListener("devicemotion", handleAccelerometer, true);
+    }
   });
 
 
 
-  /* 
+  /*
    Sticky Nav
    ========================================================================== */
   $(window).on('scroll', function () {
@@ -86,7 +94,7 @@
     // var item = items[Math.floor(Math.random()*items.length)];
     var img = canvas.toDataURL("image/png");
     getAPIFile(img);
-    download();
+    // download();
   }, false);
 
   document.getElementById('clear').addEventListener("click", function (e) {
@@ -101,7 +109,7 @@
     div.appendChild(para);
   }, false);
 
-  /* 
+  /*
  VIDEO POP-UP
  ========================================================================== */
   $('.video-popup').magnificPopup({
@@ -113,7 +121,7 @@
     fixedContentPos: false,
   });
 
-  /* 
+  /*
    Back Top Link
    ========================================================================== */
   var offset = 200;
@@ -134,7 +142,7 @@
     return false;
   })
 
-  /* 
+  /*
    One Page Navigation
    ========================================================================== */
 
@@ -186,6 +194,18 @@ var ctx = canvas.getContext("2d");
 ctx.strokeStyle = "#222222";
 ctx.lineWidth = 5;
 
+// timer
+var startTime;
+var endTime;
+var restart = true;
+function getTime() {
+  if (restart) {
+    var time = Date.now();
+    return time;
+    
+  }
+}
+
 // Set up mouse events for drawing
 var drawing = false;
 var mousePos = { x: 0, y: 0 };
@@ -193,9 +213,14 @@ var lastPos = mousePos;
 canvas.addEventListener("mousedown", function (e) {
   drawing = true;
   lastPos = getMousePos(canvas, e);
+  console.log(lastPos);
+  startTime = getTime();
+  console.log(startTime);
 }, false);
 canvas.addEventListener("mouseup", function (e) {
   drawing = false;
+  console.log(lastPos);
+  getTime();
 }, false);
 canvas.addEventListener("mousemove", function (e) {
   mousePos = getMousePos(canvas, e);
@@ -287,51 +312,49 @@ document.body.addEventListener("touchmove", function (e) {
   }
 }, false);
 
+// function getAPI(img) {
+//   var params = {
+//     // Request parameters
+//     "application": ""
+//   };
 
-function getAPI(img) {
-  var params = {
-    // Request parameters
-    "application": ""
-  };
-
-  $.ajax({
-    url: "https://westus2.api.cognitive.microsoft.com/customvision/v3.0/Prediction/6fede207-de99-4fbe-8f04-44a2154495ad/classify/iterations/Iteration8/url",
-    beforeSend: function (xhrObj) {
-      // Request headers
-      xhrObj.setRequestHeader("Prediction-Key", "78a3f4d1ae95492680685c14da50480d");
-      xhrObj.setRequestHeader("Content-Type", "application/json");
-      xhrObj.setRequestHeader("Prediction-key", "78a3f4d1ae95492680685c14da50480d");
-    },
-    type: "POST",
-    processData: false,
-    // Request body
-    data: `{"Url": "${img}"}`,
-  })
-    .done(function (data) {
-      let healthyPercentage = data.predictions[0].probability;
-      let parkisonsPercentage = data.predictions[1].probability;
-      let div = document.getElementById('results');
-      div.innerHTML = "";
-
-      let para = document.createElement("p");
-      if (healthyPercentage <= parkisonsPercentage) {
-        para.innerHTML = "You're exhibiting symptoms of Parkison's";
-      } else {
-        para.innerHTML = "Our Model shows you're healthy ";
-      }
-      div.appendChild(para);
-    })
-    .fail(function () {
-      alert("error");
-    });
-};
+//   $.ajax({
+//     url: "https://westus2.api.cognitive.microsoft.com/customvision/v3.0/Prediction/6fede207-de99-4fbe-8f04-44a2154495ad/classify/iterations/Iteration8/url",
+//     beforeSend: function (xhrObj) {
+//       // Request headers
+//       xhrObj.setRequestHeader("Prediction-Key", "78a3f4d1ae95492680685c14da50480d");
+//       xhrObj.setRequestHeader("Content-Type", "application/json");
+//       xhrObj.setRequestHeader("Prediction-key", "78a3f4d1ae95492680685c14da50480d");
+//     },
+//     type: "POST",
+//     processData: false,
+//     // Request body
+//     data: `{"Url": "${img}"}`,
+//   })
+//     .done(function (data) {
+//       let healthyPercentage = data.predictions[0].probability;
+//       let parkisonsPercentage = data.predictions[1].probability;
+//       let div = document.getElementById('results');
+//       div.innerHTML = "";
+//       let para = document.createElement("p");
+//       if (healthyPercentage <= parkisonsPercentage) {
+//         para.innerHTML = "You're exhibiting symptoms of Parkison's";
+//       } else {
+//         para.innerHTML = "Our Model shows you're healthy ";
+//       }
+//       div.appendChild(para);
+//     })
+//     .fail(function () {
+//       alert("error");
+//     });
+// };
 
 function getAPIFile(img) {
   var params = {
     // Request parameters
     "application": ""
   };
-
+  $('.loaderImage').show();
   $.ajax({
     url: "https://westus2.api.cognitive.microsoft.com/customvision/v3.0/Prediction/6fede207-de99-4fbe-8f04-44a2154495ad/classify/iterations/Iteration8/image",
     beforeSend: function (xhrObj) {
@@ -346,12 +369,12 @@ function getAPIFile(img) {
     data: makeblob(img),
   })
     .done(function (data) {
+      $('.loaderImage').hide();
       let parkisonsPercentage;
       let healthyPercentage;
       if (data.predictions[0].tagName === 'parkinson') {
         parkisonsPercentage = data.predictions[0].probability;
         healthyPercentage = data.predictions[1].probability;
-
       } else {
         healthyPercentage = data.predictions[0].probability;
         parkisonsPercentage = data.predictions[1].probability;
@@ -359,14 +382,19 @@ function getAPIFile(img) {
       let div = document.getElementById('results');
       div.innerHTML = "";
       let para = document.createElement("p");
+      let res = document.createElement('h4');
+      res.innerHTML = 'Result: ';
+      div.appendChild(res);
       if (healthyPercentage <= parkisonsPercentage) {
-        para.innerHTML = "You're exhibiting symptoms of Parkison's";
+        para.innerHTML = `Your spiral is ${(parkisonsPercentage * 100).toFixed(1)}% similar to known Parkinson's spirals`;
       } else {
-        para.innerHTML = "Our model shows you're healthy ";
+        para.innerHTML = `Your spiral is ${(healthyPercentage * 100).toFixed(1)}% similar to known healthy spirals`;
       }
+      para.className = "resultText";
       div.appendChild(para);
     })
     .fail(function () {
+      $('.loaderImage').hide();
       alert("error");
     });
 };
@@ -399,3 +427,63 @@ function download(){
   link.href = document.getElementById('sig-canvas').toDataURL()
   link.click();
 };
+function handleAccelerometer(e) {
+  console.log(e.accelerationIncludingGravity);
+}
+
+// function getAccelerameter() {
+//   import {
+//     AbsoluteOrientationSensor,
+//     RelativeOrientationSensor
+//   } from '../sensor-polyfills/motion-sensors.js';
+
+//   if (navigator.permissions) {
+//       // https://w3c.github.io/orientation-sensor/#model
+//       Promise.all([navigator.permissions.query({ name: "accelerometer" }),
+//                    navigator.permissions.query({ name: "magnetometer" }),
+//                    navigator.permissions.query({ name: "gyroscope" })])
+//              .then(results => {
+//                   if (results.every(result => result.state === "granted")) {
+//                       initSensor();
+//                   } else {
+//                       console.log("Permission to use sensor was denied.");
+//                   }
+//              }).catch(err => {
+//                   console.log("Integration with Permissions API is not enabled, still try to start app.");
+//                   initSensor();
+//              });
+//   } else {
+//       console.log("No Permissions API, still try to start app.");
+//       initSensor();
+//   }
+// }
+
+// function initSensor() {
+//   alert("initSensor");
+//   let sensor = new Accelerometer();
+//   sensor.start();
+
+//   sensor.onreading = () => {
+//       console.log("Acceleration along X-axis: " + sensor.x);
+//       console.log("Acceleration along Y-axis: " + sensor.y);
+//       console.log("Acceleration along Z-axis: " + sensor.z);
+//   }
+// }
+
+function accelerometerUpdate(e) {
+  var aX = event.accelerationIncludingGravity.x*1;
+  var aY = event.accelerationIncludingGravity.y*1;
+  var aZ = event.accelerationIncludingGravity.z*1;
+  //The following two lines are just to calculate a
+  // tilt. Not really needed. 
+  xPosition = Math.atan2(aY, aZ);
+  yPosition = Math.atan2(aX, aZ);
+  let div = document.getElementById('accel');
+  div.innerHTML = "";
+  let para = document.createElement("p");
+  para.innerHTML = aX;
+  console.log(aX + " " + aY);
+  para.className = "accelText";
+  div.appendChild(para);
+}
+
